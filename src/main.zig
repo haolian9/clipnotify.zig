@@ -83,13 +83,9 @@ pub fn main() !u8 {
 
     while (!terminated) {
         assert(c.XNextEvent(disp, &e) == 0);
-        // todo: ensure got the right event
-        // switch (e) {
-        //     .xselectionclear => log.debug("e: xselectionclear", .{}),
-        //     .xselectionrequest => log.debug("e: xselectionclear", .{}),
-        //     .xselection => log.debug("e: xselectionclear", .{}),
-        //     else => |ee| log.debug("e: {any}", .{ee}),
-        // }
+        // see /usr/include/X11/X.h
+        // it just happened to be 87, assert and let it crash!
+        assert(e.type == 87);
         try stdout.writeAll("\n");
     }
     return 0;
