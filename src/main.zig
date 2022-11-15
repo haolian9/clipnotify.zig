@@ -87,7 +87,7 @@ pub fn main() !u8 {
     var e: c.XEvent = undefined;
 
     if (args.once) {
-        nextEvent(disp, &e);
+        _ = nextEvent(disp, &e);
     } else {
         const stdout = std.io.getStdOut();
         while (nextEvent(disp, &e)) try stdout.writeAll("\n");
