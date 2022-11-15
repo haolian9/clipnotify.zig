@@ -1,5 +1,5 @@
 
-zig port of https://github.com/cdown/clipnotify's `clipnotify -l -s clipboard`
+zig port of https://github.com/cdown/clipnotify
 
 ## options
 * -1: once or keep watching; default `false`
