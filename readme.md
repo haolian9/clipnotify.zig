@@ -9,3 +9,6 @@ zig port of https://github.com/cdown/clipnotify
 * linux: libX11, libxfixes
 * zig 0.10
 * `zig build -Drelease-safe`
+
+## refs
+* https://tronche.com/gui/x/xlib/events/types.html

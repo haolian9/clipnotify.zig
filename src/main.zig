@@ -43,37 +43,27 @@ fn parseArgs() ArgErr!Args {
 }
 
 var terminated = false;
+
 fn handleSIGINT(_: c_int) callconv(.C) void {
     if (terminated) linux.exit(1);
     terminated = true;
 }
 
-pub fn main() !u8 {
-    const disp = c.XOpenDisplay(null).?;
-    defer assert(c.XCloseDisplay(disp) == 0);
+fn nextEvent(disp: *c.Display, e: *c.XEvent) bool {
+    if (terminated) return false;
 
+    assert(c.XNextEvent(disp, e) == 0);
+    // see /usr/include/X11/X.h
+    // it just happened to be 87, assert and let it crash!
+    assert(e.type == 87);
+    return true;
+}
+
+pub fn main() !u8 {
     const args = parseArgs() catch |err| {
         log.err("{s}", .{@errorName(err)});
         return 1;
     };
-
-    const root = c.DefaultRootWindow(disp);
-    const sel = switch (args.sel) {
-        .clipboard => c.XInternAtom(disp, "CLIPBOARD", 0),
-        .primary => c.XA_PRIMARY,
-        .secondary => c.XA_SECONDARY,
-    };
-    c.XFixesSelectSelectionInput(disp, root, sel, c.XFixesSetSelectionOwnerNotifyMask);
-
-    var e: c.XEvent = undefined;
-
-    const stdout = std.io.getStdOut();
-    if (args.once) {
-        const next_rc = c.XNextEvent(disp, &e);
-        log.debug("next_rc={d}; event={any}", .{ next_rc, e });
-        try stdout.writeAll("\n");
-        return 0;
-    }
 
     try std.os.sigaction(linux.SIG.INT, &.{
         .handler = .{ .handler = handleSIGINT },
@@ -81,12 +71,27 @@ pub fn main() !u8 {
         .flags = 0,
     }, null);
 
-    while (!terminated) {
-        assert(c.XNextEvent(disp, &e) == 0);
-        // see /usr/include/X11/X.h
-        // it just happened to be 87, assert and let it crash!
-        assert(e.type == 87);
-        try stdout.writeAll("\n");
+    const disp = c.XOpenDisplay(null).?;
+    defer assert(c.XCloseDisplay(disp) == 0);
+
+    {
+        const root = c.DefaultRootWindow(disp);
+        const sel = switch (args.sel) {
+            .clipboard => c.XInternAtom(disp, "CLIPBOARD", 0),
+            .primary => c.XA_PRIMARY,
+            .secondary => c.XA_SECONDARY,
+        };
+        c.XFixesSelectSelectionInput(disp, root, sel, c.XFixesSetSelectionOwnerNotifyMask);
     }
+
+    var e: c.XEvent = undefined;
+
+    if (args.once) {
+        nextEvent(disp, &e);
+    } else {
+        const stdout = std.io.getStdOut();
+        while (nextEvent(disp, &e)) try stdout.writeAll("\n");
+    }
+
     return 0;
 }
