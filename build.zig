@@ -1,24 +1,19 @@
 const std = @import("std");
 
-pub fn build(b: *std.build.Builder) void {
-    // Standard target options allows the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-    const strip = mode != .Debug;
-
-    const exe = b.addExecutable("clipnotify", "src/main.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
+    const exe = b.addExecutable(.{
+        .name = "clipnotify",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+        .single_threaded = true,
+    });
     exe.linkLibC();
     exe.linkSystemLibrary("X11");
     exe.linkSystemLibrary("xfixes");
-    exe.strip = strip;
-    exe.single_threaded = true;
-    exe.install();
+
+    b.installArtifact(exe);
 }

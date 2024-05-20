@@ -6,7 +6,7 @@ const c = @cImport({
 });
 const assert = std.debug.assert;
 const log = std.log;
-const linux = std.os.linux;
+const posix = std.posix;
 
 const Args = struct {
     once: bool,
@@ -45,7 +45,7 @@ fn parseArgs() ArgErr!Args {
 var terminated = false;
 
 fn handleSIGINT(_: c_int) callconv(.C) void {
-    if (terminated) linux.exit(1);
+    if (terminated) posix.exit(1);
     terminated = true;
 }
 
@@ -65,9 +65,9 @@ pub fn main() !u8 {
         return 1;
     };
 
-    try std.os.sigaction(linux.SIG.INT, &.{
+    try posix.sigaction(posix.SIG.INT, &.{
         .handler = .{ .handler = handleSIGINT },
-        .mask = linux.empty_sigset,
+        .mask = posix.empty_sigset,
         .flags = 0,
     }, null);
 
